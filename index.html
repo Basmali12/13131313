@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFD700">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"جيم حسين الموسوي","short_name":"HusseinGym","start_url":".","display":"standalone","background_color":"#121212","theme_color":"#FFD700","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2964/2964514.png","sizes":"192x192","type":"image/png"}]}'>
+    
+    <title>جيم حسين الموسوي - الإدارة</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FFD700; /* ذهبي */
+            --primary-dark: #B8860B;
+            --bg: #121212;
+            --card-bg: #1E1E1E;
+            --text: #ffffff;
+            --text-sec: #aaaaaa;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --nav-height: 75px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0; padding: 0;
+            padding-bottom: var(--nav-height);
+            overflow-x: hidden;
+            overscroll-behavior-y: none; /* لمنع السحب في PWA */
+        }
+
+        /* --- شاشة القفل الفخمة --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #000000, #1a1a1a);
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        
+        .fingerprint-scanner {
+            width: 90px; height: 90px;
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 50px; color: var(--primary);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+            margin-bottom: 30px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fingerprint-scanner::after {
+            content: ''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+            opacity: 0.5; animation: scan 2s infinite;
+        }
+
+        @keyframes scan { 0% { top: -100%; } 100% { top: 100%; } }
+
+        .pin-input {
+            background: rgba(255,255,255,0.05); border: 1px solid #333; color: var(--primary);
+            padding: 15px; font-size: 24px; text-align: center; letter-spacing: 8px;
+            width: 220px; border-radius: 12px; margin-bottom: 20px; font-weight: bold;
+        }
+
+        /* --- الهيدر --- */
+        header {
+            background: linear-gradient(180deg, #1a1a1a 0%, #121212 100%);
+            padding: 20px 15px;
+            border-bottom: 1px solid #333;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--primary); font-size: 24px; }
+        .brand h1 { margin: 0; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; }
+
+        /* حالة الاتصال */
+        #connection-status {
+            font-size: 10px; padding: 3px 8px; border-radius: 10px;
+        }
+
+        /* --- الكروت --- */
+        .stat-card {
+            background: linear-gradient(145deg, #252525, #1a1a1a);
+            border-radius: 16px; padding: 20px; margin-bottom: 15px;
+            border: 1px solid #333; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; right: 0; width: 5px; height: 100%;
+            background: var(--primary);
+        }
+        .stat-val { font-size: 32px; font-weight: 900; color: white; margin: 10px 0; }
+        .stat-label { font-size: 14px; color: var(--text-sec); }
+
+        /* --- النماذج --- */
+        .page { display: none; padding: 20px; animation: slideUp 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        input, select {
+            width: 100%; padding: 16px; background: #252525; border: 1px solid #333;
+            color: white; border-radius: 12px; font-size: 16px; font-family: inherit; margin-bottom: 15px;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 215, 0, 0.1); }
+        label { margin-bottom: 8px; display: block; font-size: 13px; color: var(--primary); font-weight: bold; }
+
+        .btn-main {
+            width: 100%; padding: 18px; background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            color: black; font-weight: 900; border: none; border-radius: 12px; font-size: 16px; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2); transition: 0.3s;
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        /* --- قائمة المشتركين --- */
+        .member-card {
+            background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 18px;
+            position: relative; border: 1px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .member-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .member-name { font-size: 18px; font-weight: bold; color: white; }
+        .member-sub { font-size: 12px; color: var(--text-sec); margin-top: 4px; }
+        
+        .progress-container {
+            height: 6px; background: #333; border-radius: 3px; margin: 15px 0; overflow: hidden;
+        }
+        .progress-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+        .actions-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;
+        }
+        .action-btn {
+            background: #2a2a2a; border: none; border-radius: 8px; padding: 10px; color: #fff;
+            font-size: 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+
+        /* --- المتجر --- */
+        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .product-card {
+            background: #252525; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333;
+        }
+        .product-price { color: var(--primary); font-weight: bold; margin: 5px 0; }
+
+        /* --- ستايل التنبيهات --- */
+        .notif-card {
+            background: #1e1e1e; padding: 15px; border-radius: 12px; margin-bottom: 10px;
+            border: 1px solid #333; display: flex; align-items: center; gap: 15px;
+        }
+        .notif-icon {
+            width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 71, 87, 0.1);
+            color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+
+        /* --- النافبار --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: #1a1a1a; display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid #333; z-index: 1000;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+        }
+        .nav-item { color: #555; text-align: center; font-size: 10px; flex: 1; transition: 0.3s; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 6px; }
+        .nav-item.active { color: var(--primary); transform: translateY(-5px); }
+        .nav-item.active i { text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+
+        /* حقوق المطور */
+        .dev-badge {
+            margin-top: 30px; text-align: center; padding: 15px;
+            border-top: 1px solid #333; font-size: 14px; color: #666;
+        }
+        .dev-badge span { color: var(--primary); font-weight: bold; font-family: monospace; letter-spacing: 1px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="fingerprint-scanner" onclick="alert('⛔ عذراً، ميزة البصمة متوقفة حالياً من قبل المطور\nالمطور: @Mlll_888')">
+            <i class="fas fa-fingerprint"></i>
+        </div>
+        <div style="margin-bottom: 20px; color: #888;">أدخل رمز المرور</div>
+        <input type="tel" id="pinCode" class="pin-input" placeholder="••••••" maxlength="6">
+        <button class="btn-main" style="width: 220px;" onclick="checkPin()">دخول النظام</button>
+    </div>
+
+    <header>
+        <div class="brand">
+            <i class="fas fa-crown"></i>
+            <div>
+                <h1>جيم حسين الموسوي</h1>
+                <div style="font-size: 10px; color: var(--primary); letter-spacing: 2px;">LUXURY GYM</div>
+            </div>
+        </div>
+        <div style="text-align: left;">
+            <div style="font-size: 12px; color: #888" id="headerDate"></div>
+            <div id="connection-status" style="color:#666">جاري التحقق..</div>
+        </div>
+    </header>
+
+    <div id="home" class="page active">
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div class="stat-card" style="flex: 1;">
+                <div class="stat-label">المشتركين النشطين</div>
+                <div class="stat-val" id="st-active">0</div>
+                <div style="font-size: 12px; color: var(--success);">تم التحديث الآن</div>
+            </div>
+            <div class="stat-card" style="flex: 1; border-color: var(--danger);">
+                <div class="stat-label">مجموع الديون</div>
+                <div class="stat-val" style="color: var(--danger);" id="st-debt">0</div>
+                <div style="font-size: 12px; color: #aaa;">دينار عراقي</div>
+            </div>
+        </div>
+
+        <h3 style="border-right: 3px solid var(--primary); padding-right: 10px; margin-bottom: 15px;">المبيعات اليومية (المتجر)</h3>
+        <div class="stat-card" style="background: linear-gradient(145deg, #2c3e50, #1a1a1a); border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div class="stat-label" style="color:#bdc3c7">مبيعات اليوم</div>
+                    <div class="stat-val" style="color: #3498db;" id="st-sales">0</div>
+                </div>
+                <i class="fas fa-shopping-cart" style="font-size: 30px; opacity: 0.2; color: white;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div id="store" class="page">
+        <h3 style="color: var(--primary);">المقصف / الكافيتيريا</h3>
+        <p style="color: #666; font-size: 12px;">اضغط على المنتج لإضافة بيع</p>
+        
+        <div class="product-grid">
+            <div class="product-card" onclick="addSale(500, 'ماء')">
+                <i class="fas fa-tint" style="font-size: 30px; color: #3498db; margin-bottom: 10px;"></i>
+                <div style="font-weight: bold;">ماء صغير</div>
+                <div class="product-price">500 د.ع</div>
+            </div>
+            <div class="product-card" onclick="addSale(2000, 'مشروب طاقة')">
+                <i class="fas fa-bolt" style="font-size: 30px; color: var(--primary); margin-bottom: 10px;"></i>
+                <div style="font-weight: bold;">مشروب طاقة</div>
+                <div class="product-price">2,000 د.ع</div>
+            </div>
+            <div class="product-card" onclick="addSale(3000, 'بروتين شيك')">
+                <i class="fas fa-flask" style="font-size: 30px; color: var(--danger); margin-bottom: 10px;"></i>
+                <div style="font-weight: bold;">بروتين شيك</div>
+                <div class="product-price">3,000 د.ع</div>
+            </div>
+            <div class="product-card" onclick="addSale(1000, 'قهوة')">
+                <i class="fas fa-coffee" style="font-size: 30px; color: #e67e22; margin-bottom: 10px;"></i>
+                <div style="font-weight: bold;">قهوة / شاي</div>
+                <div class="product-price">1,000 د.ع</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; background: #222; padding: 15px; border-radius: 10px;">
+            <h4>سجل مبيعات اليوم:</h4>
+            <div id="salesLog" style="font-size: 12px; color: #aaa; max-height: 150px; overflow-y: auto;">
+                لا توجد مبيعات بعد..
+            </div>
+            <button onclick="clearSales()" style="margin-top: 10px; width: 100%; background: #333; color: white; border: none; padding: 10px; border-radius: 5px;">تصفير اليومية</button>
+        </div>
+    </div>
+
+    <div id="notifs" class="page">
+        <h2 style="color: var(--primary); margin-bottom: 15px;">تنبيهات الاشتراكات</h2>
+        <div id="notifContainer"></div>
+    </div>
+
+    <div id="list" class="page">
+        <button onclick="openAddModal()" style="position: fixed; bottom: 90px; left: 20px; width: 60px; height: 60px; border-radius: 50%; background: var(--primary); border: none; font-size: 24px; box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4); z-index: 999;"><i class="fas fa-plus"></i></button>
+
+        <input type="text" id="searchInput" placeholder="بحث عن مشترك..." onkeyup="renderMembers()">
+        <div id="membersContainer" style="padding-bottom: 80px;"></div>
+    </div>
+
+    <div id="formPage" class="page" style="background: var(--bg); position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 id="formTitle" style="color: var(--primary); margin: 0;">مشترك جديد</h2>
+            <button onclick="closeForm()" style="background: none; border: none; color: white; font-size: 24px;"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="gymForm">
+            <input type="hidden" id="editIndex" value="-1">
+            
+            <label>اسم المشترك</label>
+            <input type="text" id="pName" placeholder="الاسم الثلاثي" required>
+
+            <label>رقم الهاتف</label>
+            <input type="tel" id="pPhone" placeholder="07..." required>
+
+            <label>مدة الاشتراك (بالأيام)</label>
+            <input type="number" id="pDays" placeholder="30" value="30" required>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <span onclick="setDays(30)" style="background: #333; padding: 5px 15px; border-radius: 20px; font-size: 12px; cursor: pointer;">شهر</span>
+                <span onclick="setDays(90)" style="background: #333; padding: 5px 15px; border-radius: 20px; font-size: 12px; cursor: pointer;">3 شهور</span>
+            </div>
+
+            <label>مبلغ الاشتراك</label>
+            <input type="number" id="pPrice" placeholder="مثال: 35000" required>
+
+            <label>المبلغ الواصل</label>
+            <input type="number" id="pPaid" placeholder="مثال: 35000" required>
+
+            <button type="submit" class="btn-main" id="saveBtn">حفظ البيانات</button>
+        </form>
+    </div>
+
+    <div id="settings" class="page">
+        <h2 style="color: var(--primary);">الإعدادات</h2>
+        
+        <div class="stat-card" onclick="alert('قريباً: ربط مع الطابعة الحرارية')">
+            <i class="fas fa-print" style="color: var(--text-sec); font-size: 20px; float: left;"></i>
+            <h4 style="margin: 0;">إعدادات الطابعة</h4>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">للإيصالات الورقية</p>
+        </div>
+
+        <div class="stat-card" onclick="localStorage.clear(); location.reload();" style="border-color: var(--danger);">
+            <i class="fas fa-trash-alt" style="color: var(--danger); font-size: 20px; float: left;"></i>
+            <h4 style="margin: 0; color: var(--danger);">حذف كافة البيانات</h4>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: #666;">تحذير: لا يمكن التراجع</p>
+        </div>
+
+        <div class="dev-badge">
+            تم التطوير بواسطة <br>
+            <span onclick="window.open('https://t.me/Mlll_888')">@Mlll_888</span>
+            <div style="font-size: 10px; margin-top: 5px;">نسخة خاصة لجيم حسين الموسوي</div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('home', this)"><i class="fas fa-chart-line"></i>الرئيسية</div>
+        <div class="nav-item" onclick="switchPage('store', this)"><i class="fas fa-store"></i>المتجر</div>
+        <div class="nav-item" onclick="switchPage('notifs', this)"><i class="fas fa-bell"></i>التنبيهات</div>
+        <div class="nav-item" onclick="switchPage('list', this)"><i class="fas fa-users"></i>المشتركين</div>
+        <div class="nav-item" onclick="switchPage('settings', this)"><i class="fas fa-sliders-h"></i>الإعدادات</div>
+    </nav>
+
+    <script>
+        // --- البيانات الأساسية ---
+        let members = JSON.parse(localStorage.getItem('h_gym_members')) || [];
+        let dailySales = JSON.parse(localStorage.getItem('h_gym_sales')) || 0;
+        let salesHistory = JSON.parse(localStorage.getItem('h_gym_sales_log')) || [];
+        
+        document.getElementById('headerDate').innerText = new Date().toLocaleDateString('ar-IQ');
+
+        // --- PWA Service Worker (جعل الموقع يعمل أوفلاين) ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(window.URL.createObjectURL(new Blob([`
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open('gym-v3').then(cache => cache.addAll(['./'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(response => response || fetch(e.request)));
+                });
+            `], {type: 'text/javascript'})))
+            .then(() => console.log('PWA Service Worker Registered'));
+        }
+
+        // --- نظام المزامنة (Online/Offline) ---
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connection-status');
+            if(navigator.onLine) {
+                statusEl.innerText = "● متصل (جاري المزامنة)";
+                statusEl.style.color = "var(--success)";
+                syncToDatabase();
+            } else {
+                statusEl.innerText = "● وضع الأوفلاين (حفظ محلي)";
+                statusEl.style.color = "var(--text-sec)";
+            }
+        }
+
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        updateConnectionStatus(); // فحص عند البدء
+
+        function syncToDatabase() {
+            // هنا يتم وضع كود قاعدة البيانات مستقبلاً
+            console.log("Syncing data to cloud...");
+        }
+
+        // --- نظام القفل ---
+        function checkPin() {
+            if(document.getElementById('pinCode').value === '123321') {
+                document.getElementById('login-screen').style.transform = 'translateY(-100%)';
+                updateDashboard();
+            } else {
+                alert('الرمز خاطئ');
+                document.getElementById('pinCode').value = '';
+            }
+        }
+
+        // --- التنقل ---
+        function switchPage(id, el) {
+            document.querySelectorAll('.page').forEach(p => {
+                if(p.id !== 'formPage') p.classList.remove('active');
+            });
+            document.getElementById(id).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if(el) el.classList.add('active');
+
+            if(id === 'home') updateDashboard();
+            if(id === 'list') renderMembers();
+            if(id === 'store') renderSalesLog();
+            if(id === 'notifs') renderNotifs();
+        }
+
+        function setDays(n) { document.getElementById('pDays').value = n; }
+
+        // --- إدارة المشتركين ---
+        function openAddModal() {
+            resetForm();
+            document.getElementById('formPage').classList.add('active');
+        }
+        function closeForm() {
+            document.getElementById('formPage').classList.remove('active');
+        }
+
+        document.getElementById('gymForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            let id = document.getElementById('editIndex').value;
+            let name = document.getElementById('pName').value;
+            let phone = document.getElementById('pPhone').value;
+            let days = parseInt(document.getElementById('pDays').value);
+            let price = parseFloat(document.getElementById('pPrice').value);
+            let paid = parseFloat(document.getElementById('pPaid').value);
+            
+            if(id === "-1") {
+                let start = new Date();
+                let end = new Date();
+                end.setDate(start.getDate() + days);
+                
+                members.unshift({
+                    name, phone, price, paid, 
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                    totalDays: days,
+                    frozen: false
+                });
+                alert("تم إضافة المشترك: " + name);
+            } else {
+                let idx = parseInt(id);
+                members[idx].name = name;
+                members[idx].phone = phone;
+                members[idx].price = price;
+                members[idx].paid = paid;
+                
+                let startDate = new Date(members[idx].start);
+                let newEndDate = new Date(startDate);
+                newEndDate.setDate(startDate.getDate() + days);
+                
+                members[idx].end = newEndDate.toISOString();
+                members[idx].totalDays = days;
+
+                alert("تم تحديث البيانات وإعادة حساب المدة بنجاح");
+            }
+
+            localStorage.setItem('h_gym_members', JSON.stringify(members));
+            closeForm();
+            renderMembers();
+        });
+
+        function renderMembers() {
+            let container = document.getElementById('membersContainer');
+            let search = document.getElementById('searchInput').value.toLowerCase();
+            container.innerHTML = '';
+
+            let today = new Date();
+
+            members.forEach((m, i) => {
+                if(!m.name.toLowerCase().includes(search)) return;
+
+                let end = new Date(m.end);
+                let diff = Math.ceil((end - today) / (1000*60*60*24));
+                let debt = m.price - m.paid;
+                
+                let percentage = 0;
+                if(m.totalDays > 0) {
+                    percentage = 100 - ((diff / m.totalDays) * 100);
+                    if(percentage > 100) percentage = 100;
+                    if(percentage < 0) percentage = 0;
+                }
+
+                let color = diff > 5 ? 'var(--success)' : (diff >= 0 ? 'var(--primary)' : 'var(--danger)');
+                if(m.frozen) color = '#aaa';
+
+                let html = `
+                <div class="member-card" style="border-right: 4px solid ${color}">
+                    <div class="member-header">
+                        <div>
+                            <div class="member-name">${m.name}</div>
+                            <div class="member-sub">${m.phone}</div>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight:bold; color:${color}">${m.frozen ? 'مجمد' : (diff > 0 ? `باقي ${diff} يوم` : 'منتهي')}</div>
+                            ${debt > 0 ? `<div style="color:var(--danger); font-size:11px;">مطلوب: ${debt}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: ${percentage}%; background: ${color};"></div>
+                    </div>
+                    <div class="actions-grid">
+                        <button class="action-btn" onclick="openWhatsApp('${m.phone}')"><i class="fab fa-whatsapp" style="color:#25D366"></i> تنبيه</button>
+                        <button class="action-btn" onclick="editMember(${i})"><i class="fas fa-edit" style="color:#3498db"></i> تعديل</button>
+                        <button class="action-btn" onclick="toggleFreeze(${i})"><i class="fas fa-snowflake" style="color:white"></i> تجميد</button>
+                        <button class="action-btn" onclick="deleteMember(${i})"><i class="fas fa-trash" style="color:var(--danger)"></i> حذف</button>
+                    </div>
+                </div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function renderNotifs() {
+            let container = document.getElementById('notifContainer');
+            container.innerHTML = '';
+            let count = 0;
+            let today = new Date();
+
+            members.forEach(m => {
+                let end = new Date(m.end);
+                let diff = Math.ceil((end - today) / (1000*60*60*24));
+
+                if(diff <= 3 && !m.frozen) {
+                    count++;
+                    let isExpired = diff < 0;
+                    let msg = isExpired ? 'اشتراك منتهي' : `باقي ${diff} أيام فقط`;
+                    let color = isExpired ? 'var(--danger)' : 'var(--primary)';
+                    let icon = isExpired ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>';
+
+                    let html = `
+                    <div class="notif-card" style="border-right: 4px solid ${color}">
+                        <div class="notif-icon" style="color:${color}; background:rgba(255,255,255,0.05)">${icon}</div>
+                        <div style="flex:1">
+                            <div style="font-weight:bold; font-size:16px;">${m.name}</div>
+                            <div style="color:${color}; font-size:14px; margin-top:5px;">${msg}</div>
+                            <div style="font-size:12px; color:#666; margin-top:5px;">ينتهي: ${end.toLocaleDateString('ar-IQ')}</div>
+                        </div>
+                        <button onclick="openWhatsApp('${m.phone}')" style="background:none; border:none; color:#25D366; font-size:24px;"><i class="fab fa-whatsapp"></i></button>
+                    </div>`;
+                    container.innerHTML += html;
+                }
+            });
+
+            if(count === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#666;"><i class="fas fa-check-circle" style="font-size:40px; margin-bottom:10px;"></i><br>لا توجد تنبيهات عاجلة</div>';
+            }
+        }
+
+        function editMember(i) {
+            let m = members[i];
+            document.getElementById('editIndex').value = i;
+            document.getElementById('pName').value = m.name;
+            document.getElementById('pPhone').value = m.phone;
+            document.getElementById('pPrice').value = m.price;
+            document.getElementById('pPaid').value = m.paid;
+            document.getElementById('pDays').value = m.totalDays || 30; 
+            document.getElementById('formTitle').innerText = "تعديل البيانات";
+            document.getElementById('saveBtn').innerText = "حفظ التعديلات";
+            document.getElementById('formPage').classList.add('active');
+        }
+
+        function resetForm() {
+            document.getElementById('gymForm').reset();
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('formTitle').innerText = "مشترك جديد";
+            document.getElementById('saveBtn').innerText = "حفظ البيانات";
+        }
+
+        function deleteMember(i) {
+            if(confirm('حذف المشترك نهائياً؟')) {
+                members.splice(i, 1);
+                localStorage.setItem('h_gym_members', JSON.stringify(members));
+                renderMembers();
+            }
+        }
+
+        function toggleFreeze(i) {
+            members[i].frozen = !members[i].frozen;
+            localStorage.setItem('h_gym_members', JSON.stringify(members));
+            renderMembers();
+        }
+
+        function openWhatsApp(phone) {
+            window.open(`https://wa.me/${phone}`, '_blank');
+        }
+
+        // --- المتجر والإحصائيات ---
+        function addSale(price, item) {
+            dailySales += price;
+            salesHistory.unshift({ item, price, time: new Date().toLocaleTimeString('ar-IQ') });
+            localStorage.setItem('h_gym_sales', JSON.stringify(dailySales));
+            localStorage.setItem('h_gym_sales_log', JSON.stringify(salesHistory));
+            renderSalesLog();
+            alert(`تم بيع ${item} بنجاح`);
+        }
+
+        function renderSalesLog() {
+            document.getElementById('st-sales').innerText = dailySales.toLocaleString();
+            let log = document.getElementById('salesLog');
+            log.innerHTML = '';
+            salesHistory.forEach(s => {
+                log.innerHTML += `<div style="border-bottom:1px solid #333; padding:5px; display:flex; justify-content:space-between;"><span>${s.item}</span><span>${s.price}</span></div>`;
+            });
+        }
+
+        function clearSales() {
+            if(confirm("هل تريد تصفير المبيعات لبدء يوم جديد؟")) {
+                dailySales = 0;
+                salesHistory = [];
+                localStorage.setItem('h_gym_sales', JSON.stringify(dailySales));
+                localStorage.setItem('h_gym_sales_log', JSON.stringify(salesHistory));
+                renderSalesLog();
+            }
+        }
+
+        function updateDashboard() {
+            let active = members.filter(m => new Date(m.end) > new Date()).length;
+            let debt = members.reduce((acc, m) => acc + (m.price - m.paid), 0);
+            document.getElementById('st-active').innerText = active;
+            document.getElementById('st-debt').innerText = debt.toLocaleString();
+            document.getElementById('st-sales').innerText = dailySales.toLocaleString();
+        }
+
+        renderSalesLog();
+    </script>
+</body>
+</html>
